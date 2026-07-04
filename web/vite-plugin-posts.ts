@@ -12,7 +12,7 @@ interface PostManifestEntry {
 	readingMinutes: number;
 }
 
-const POSTS_DIR = resolve(process.cwd(), '..', 'posts');
+const POSTS_DIR = resolve(process.cwd(), 'posts');
 const VIRTUAL_ID = 'virtual:posts';
 const RESOLVED_ID = `\0${VIRTUAL_ID}`;
 

@@ -1,0 +1,50 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/forms';
+@plugin '@tailwindcss/typography';
+
+:root {
+	color-scheme: dark;
+}
+
+html,
+body {
+	background-color: #000000;
+	color: #ffffff;
+}
+
+a {
+	color: inherit;
+	text-decoration: none;
+}
+
+.prose pre {
+	background-color: #0a0a0a;
+	border: 1px solid #1a1a1a;
+}
+
+.prose :where(code):not(:where([class~='not-prose'] *))::before,
+.prose :where(code):not(:where([class~='not-prose'] *))::after {
+	content: '';
+}
+
+.prose :where(code):not(:where([class~='not-prose'] *)) {
+	background-color: #111111;
+	padding: 0.15em 0.35em;
+	border-radius: 0.25rem;
+	font-weight: 400;
+}
+
+.prose :where(a):not(:where([class~='not-prose'] *)) {
+	color: #ffffff;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
+.prose :where(blockquote):not(:where([class~='not-prose'] *)) {
+	border-left-color: #333333;
+	color: #aaaaaa;
+}
+
+.prose :where(hr):not(:where([class~='not-prose'] *)) {
+	border-color: #1a1a1a;
+}

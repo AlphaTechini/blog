@@ -3,6 +3,7 @@ declare module 'virtual:posts' {
 		slug: string;
 		title: string;
 		date: string;
+		category: string;
 		excerpt: string;
 		html: string;
 		readingMinutes: number;

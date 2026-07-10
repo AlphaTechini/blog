@@ -11,6 +11,7 @@ export async function load({ params }) {
 		title: post.title,
 		html: post.html,
 		date: post.date,
+		category: post.category,
 		formattedDate: formatDate(post.date),
 		readingMinutes: post.readingMinutes
 	};

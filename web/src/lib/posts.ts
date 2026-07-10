@@ -7,6 +7,14 @@ export function getAllPosts(): Post[] {
 	return posts;
 }
 
+export function getPostsByCategory(category: string): Post[] {
+	return posts.filter((p) => p.category === category);
+}
+
+export function getCategories(): string[] {
+	return [...new Set(posts.map((p) => p.category))];
+}
+
 export function getPostBySlug(slug: string): Post | undefined {
 	return posts.find((p) => p.slug === slug);
 }

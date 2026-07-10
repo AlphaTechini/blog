@@ -20,13 +20,13 @@ The blog has no database. Posts are markdown files in [`../posts/`](../posts/). 
 ### Build-time pipeline
 
 1. [vite-plugin-posts.ts](./vite-plugin-posts.ts) scans `../posts/*.md` (skipping `_`-prefixed drafts and `README.md`).
-2. For each file it parses optional frontmatter, extracts the title from the first `# heading`, pulls the git first-commit date, renders the markdown to HTML with `marked`, and computes a reading-time estimate.
+2. For each file it parses optional frontmatter, extracts the title from the first `# heading`, resolves the date (frontmatter `date` -> git add-date with `--follow` -> filesystem birthtime -> mtime), reads the `category` field (defaults to `General`), renders the markdown to HTML with `marked`, and computes a reading-time estimate.
 3. The sorted manifest (newest first) is exposed as the `virtual:posts` module.
 
 ### Runtime data flow
 
-- The overview page loads the manifest via [src/lib/posts.ts](./src/lib/posts.ts) and renders the post list with the author intro from [src/lib/author.ts](./src/lib/author.ts).
-- The post page looks up a slug in the manifest and renders the pre-built HTML.
+- The overview page loads the manifest via [src/lib/posts.ts](./src/lib/posts.ts), groups posts by `category`, and renders each group as a section with the author intro from [src/lib/author.ts](./src/lib/author.ts).
+- The post page looks up a slug in the manifest, shows the category, and renders the pre-built HTML.
 - Both pages are prerendered at build time.
 
 ## Key files

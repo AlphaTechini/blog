@@ -17,8 +17,9 @@ The site runs at `http://localhost:5173`.
 1. Create a `.md` file in [`posts/`](./posts/).
 2. The filename becomes the URL slug (`posts/hello-world.md` -> `/posts/hello-world`).
 3. The first `# heading` becomes the title.
-4. The post is ordered by its git first-commit date (the date the file was added to the repo).
-5. Optional YAML frontmatter for `title` and `description` overrides the defaults.
+4. The post date is resolved from frontmatter `date`, then the git first-commit date (traced through renames), then filesystem creation time. Touching one file never changes another file's date.
+5. Optional YAML frontmatter for `title`, `description`, `category`, and `date` overrides the defaults.
+6. Posts are grouped into sections by `category` on the overview page. Posts without a category default to `General`.
 
 Files starting with `_` or named `README.md` are ignored by the renderer.
 

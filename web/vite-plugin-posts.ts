@@ -7,6 +7,7 @@ interface PostManifestEntry {
 	slug: string;
 	title: string;
 	date: string;
+	category: string;
 	excerpt: string;
 	html: string;
 	readingMinutes: number;
@@ -34,9 +35,12 @@ function getGitAddDate(filePath: string): string {
 			.filter(Boolean)[0];
 		if (date) return date;
 	} catch {
-		// file not tracked in git yet, fall through to mtime
+		// file not tracked in git yet, fall through to filesystem
 	}
-	return statSync(filePath).mtime.toISOString();
+	const stats = statSync(filePath);
+	const birth = stats.birthtime;
+	if (birth && birth.getTime() > 0) return birth.toISOString();
+	return stats.mtime.toISOString();
 }
 
 function parseFrontmatter(raw: string): { data: Record<string, unknown>; content: string } {
@@ -72,6 +76,11 @@ function readingTime(content: string): number {
 	return Math.max(1, Math.round(words / 200));
 }
 
+function resolveDate(data: Record<string, unknown>, filePath: string): string {
+	if (typeof data.date === 'string' && data.date) return new Date(data.date).toISOString();
+	return getGitAddDate(filePath);
+}
+
 function buildManifest(): PostManifestEntry[] {
 	if (!existsSync(POSTS_DIR)) return [];
 	const files = readdirSync(POSTS_DIR).filter(
@@ -84,13 +93,15 @@ function buildManifest(): PostManifestEntry[] {
 		const { data, content } = parseFrontmatter(raw);
 		const title = (typeof data.title === 'string' && data.title) || extractTitle(content, slug);
 		const html = marked.parse(content, { async: false }) as string;
-		const date = getGitAddDate(fullPath);
+		const date = resolveDate(data, fullPath);
+		const category = (typeof data.category === 'string' && data.category) || 'General';
 		const excerpt =
 			(typeof data.description === 'string' && data.description) || extractExcerpt(content);
 		return {
 			slug,
 			title,
 			date,
+			category,
 			excerpt,
 			html,
 			readingMinutes: readingTime(content)

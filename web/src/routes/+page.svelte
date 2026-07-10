@@ -64,42 +64,50 @@
 
 <section class="border-t border-neutral-800">
 	<div class="mx-auto max-w-2xl px-6 py-12">
-		<h2 class="text-sm tracking-widest text-neutral-500 uppercase mb-6">Selected Work</h2>
-		<div class="space-y-4">
-			{#each author.pinnedRepos as repo}
-				<a href={repo.url} target="_blank" rel="noopener" class="block group">
-					<div class="flex items-baseline justify-between gap-4">
-						<span class="font-medium group-hover:underline underline-offset-4">{repo.name}</span>
-						<span class="text-xs text-neutral-600 shrink-0">{repo.language}</span>
-					</div>
-					<p class="text-sm text-neutral-500 mt-0.5">{repo.description}</p>
-				</a>
-			{/each}
-		</div>
+		<a
+			href={author.website}
+			target="_blank"
+			rel="noopener"
+			class="block rounded-lg border border-neutral-700 p-6 hover:border-neutral-500 transition-colors group"
+		>
+			<p class="text-sm tracking-widest text-neutral-500 uppercase mb-2">Portfolio</p>
+			<p class="text-lg font-semibold group-hover:underline underline-offset-4">
+				View my previous works and other projects &rarr;
+			</p>
+		</a>
 	</div>
 </section>
 
 <section class="border-t border-neutral-800">
 	<div class="mx-auto max-w-2xl px-6 py-12">
 		<h2 class="text-sm tracking-widest text-neutral-500 uppercase mb-6">Posts</h2>
-		{#if data.posts.length === 0}
+		{#if data.grouped.length === 0}
 			<p class="text-neutral-500">
 				No posts yet. Add a markdown file to the <code class="text-neutral-300">posts/</code> folder.
 			</p>
 		{:else}
 			<div class="space-y-8">
-				{#each data.posts as post (post.slug)}
-					<a href={`/posts/${post.slug}`} class="block group">
-						<div class="flex items-baseline gap-3 text-xs text-neutral-600 mb-1">
-							<time datetime={post.date}>{post.formattedDate}</time>
-							<span>/</span>
-							<span>{post.readingMinutes} min read</span>
-						</div>
-						<h3 class="text-xl font-semibold group-hover:underline underline-offset-4">
-							{post.title}
+				{#each data.grouped as group (group.category)}
+					<div>
+						<h3 class="text-xs tracking-widest text-neutral-600 uppercase mb-4">
+							{group.category}
 						</h3>
-						<p class="text-neutral-400 mt-1 leading-relaxed">{post.excerpt}</p>
-					</a>
+						<div class="space-y-8">
+							{#each group.posts as post (post.slug)}
+								<a href={`/posts/${post.slug}`} class="block group">
+									<div class="flex items-baseline gap-3 text-xs text-neutral-600 mb-1">
+										<time datetime={post.date}>{post.formattedDate}</time>
+										<span>/</span>
+										<span>{post.readingMinutes} min read</span>
+									</div>
+									<h4 class="text-xl font-semibold group-hover:underline underline-offset-4">
+										{post.title}
+									</h4>
+									<p class="text-neutral-400 mt-1 leading-relaxed">{post.excerpt}</p>
+								</a>
+							{/each}
+						</div>
+					</div>
 				{/each}
 			</div>
 		{/if}

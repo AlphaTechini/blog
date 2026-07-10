@@ -15,6 +15,8 @@
 	<header class="mb-10">
 		<h1 class="text-3xl font-bold tracking-tight mb-3">{data.title}</h1>
 		<div class="flex items-baseline gap-3 text-sm text-neutral-600">
+			<span>{data.category}</span>
+			<span>/</span>
 			<time datetime={data.date}>{data.formattedDate}</time>
 			<span>/</span>
 			<span>{data.readingMinutes} min read</span>

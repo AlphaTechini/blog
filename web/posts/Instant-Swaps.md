@@ -10,7 +10,7 @@ Also, the order books are based on the tokens you actually want to swap.
 There are different markets for:
 
 1. USDT to USDC transactions
-2. Ethereum to BTC orders   and so on...
+2. Ethereum to BTC orders and so on...
 
 The order book used will be the one specific to the two tokens you want to swap, matching those two exactly.
 

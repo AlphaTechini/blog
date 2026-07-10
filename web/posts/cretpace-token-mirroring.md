@@ -2,54 +2,49 @@
 title: Token Mirroring
 category: CrestPace
 date: 2026-07-09
-description: How CrestPace deploys mirrored tokens on BNB testnet that carry real-world prices directly on-chain, removing the need for an oracle call on every transaction.
+description: How CrestPace deploys mirrored tokens on BNB testnet and fetches real-world prices on-demand at the point of each transaction, using an event-driven architecture with a three-tier API fallback.
 ---
 
-# Token Mirroring: On-Chain Prices Without an Oracle
+# Token Mirroring: Event-Driven Price Fetching
 
-One of the first architectural problems I hit while designing CrestPace was price data. Every transaction, swap, stop-loss trigger, and interest calculation needs to know what a token is worth. The default answer is "call a price API" or "read from an oracle contract." I did not want to do that on every single transaction.
+One of the first architectural problems I hit while designing CrestPace was price data. Every transaction, swap, stop-loss trigger, and interest calculation needs to know what a token is worth. The question was how to get that price reliably without adding unnecessary complexity on-chain.
 
-## The problem with external price feeds
+## The constraint: contracts can't make external calls
 
-If the backend reads a price from one API and the on-chain logic reads from another, they can disagree. Not because either is wrong, but because they queried at slightly different times and the market moved between those two calls. That mismatch is a bug source that scales with the number of price-dependent operations.
+Smart contracts are passive. They cannot reach out to an external API, fetch a price, and use it. Anything that needs external data has to be fed to the contract by an off-chain process.
 
-There is also the latency problem. Reading an external API or calling an oracle contract from within a transaction adds a round trip. For a platform whose name is built on speed, that is a bad trade.
+This means the price has to be fetched off-chain, in the backend, at the moment it is needed. The architecture is event-driven: once a user makes a transaction request, the backend fetches the exact current price immediately and uses that for that particular transaction.
 
 ## The approach: mirrored tokens
 
-Instead of consulting an external feed at the point of every transaction, CrestPace deploys its own versions of tokens on the BNB testnet. Each mirrored token tracks the live price of its real-world counterpart and carries that price on-chain.
+CrestPace deploys its own versions of tokens on the BNB testnet. Each mirrored token represents a real-world cryptocurrency (BTC, ETH, USDC, etc.) and is used for actual transactions on the platform. These contracts handle transfers and balances, not price storage.
 
-When the price of the real-world token changes, it reflects on the mirrored token.
+When a user initiates a transaction, the backend fetches the current price of the real-world token from an external API. The fetched price is used for that specific transaction: conversions, swaps, balance calculations, stop-loss triggers, and interest calculations all use the price fetched at the point of the request.
 
-This means every transaction on the platform uses prices that exist directly on-chain with the tokens themselves. The mirrored tokens behave as though they have a built-in reserve price, removing the need to consult an external price feed at the point of every transaction.
+No price is written to the contract. No oracle is consulted on-chain. The fetch happens off-chain in the backend, and the result is applied to the transaction directly.
 
-### How it works
-
-- A mirrored USDC, ETH, BTC, or any other supported token is deployed as a smart contract on BNB testnet.
-- Each contract holds a price field that is updated by an off-chain price feed service. The feed polls external APIs and writes the current price to the contract when a change is detected.
-- Transfers, swaps, and balance calculations read the price directly from the token contract, not from a separate oracle contract or an API call.
-- The price is always available on-chain, so any on-chain logic that needs it (a swap contract, a stop-loss trigger, an interest calculation) can access it without an additional external call.
+This means every transaction uses the real-world price at the moment it is executed, not a stale price written to a contract earlier.
 
 ## The trade-off
 
 This is not a free lunch.
 
-**Up-front complexity.** Deploying and maintaining mirrored tokens for every supported asset adds initial contract work and an ongoing price-feed pipeline. This is more setup than simply calling a price API from the backend.
+**Up-front complexity.** Deploying and maintaining mirrored tokens for every supported asset adds initial contract work. The price-fetching pipeline also needs to be built and hardened with fallbacks.
 
-**Long-term simplicity.** Once deployed, all on-chain components (contracts, listeners, the backend ledger) read from a single authoritative source. There is no risk of the backend and on-chain logic disagreeing on the current price because they queried different APIs at slightly different times.
+**Event-driven accuracy.** Because the price is fetched at the point of each transaction, the system always uses the most current price available. There is no risk of transacting against a stale on-chain price that was written minutes or hours ago.
 
-**Price feeds remain an external dependency.** The mirrored token still relies on an off-chain service to write prices. The point is not to eliminate the feed, but to consolidate it into one pipeline that feeds all downstream consumers.
+**Price feeds remain an external dependency.** Every transaction depends on an external API call succeeding. The fallback system is what makes this reliable.
 
 ## Keeping the feed alive: the fallback system
 
-Since the off-chain price feed depends on external APIs, downtime is a real risk. To prevent it, a three-tier fallback system is used.
+Since every transaction depends on an external API call, downtime is a real risk. To prevent it, a three-tier fallback system is used.
 
 The main option is a primary API with a very generous free tier. This allows fetching prices as many times as possible for free.
 
 Fallbacks are essential in two cases:
 
 1. **Quota exhaustion.** If the monthly limit on the first API is surpassed, the fallback APIs cover the remaining requests. The background cron job for regular price refreshes is designed so that it does not exhaust the monthly quota on its own.
-2. **Event-driven capacity.** Whenever a user triggers a transaction, the system still needs to fetch prices and update the tokens. Enough request capacity must be left on the primary API for these event-driven requests, and the fallbacks absorb the overflow.
+2. **Event-driven capacity.** Whenever a user triggers a transaction, the system still needs to fetch prices. Enough request capacity must be left on the primary API for these event-driven requests, and the fallbacks absorb the overflow.
 
 The redundancy works in sequence:
 
@@ -59,4 +54,4 @@ The redundancy works in sequence:
 
 ## Why I chose this
 
-The consolidation is the real win. One pipeline writes prices. Everything else reads from the token contract. The system becomes simpler to reason about because there is exactly one place where prices enter the chain, and every consumer downstream reads the same value. That is worth the extra contract work up front.
+Fetching the price at the point of each transaction means the system never transacts against stale data. The price a user sees is the price used for their transaction, fetched in real time. The fallback system ensures that the fetch itself never becomes a single point of failure. That combination is worth the extra engineering.
